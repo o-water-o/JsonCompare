@@ -1,3 +1,4 @@
+import re
 from abc import ABC
 
 
@@ -18,6 +19,8 @@ class Ignore(ABC):
             rule = rules[key]
             if cls._is_special_key(key):
                 obj = cls._apply_special_rule(key, obj, rule)
+            elif cls._is_regex_rule(rule):
+                obj = cls._apply_regex_rule(key, obj, rule)
             elif type(rule) is str:
                 obj = cls._apply_stringable_rule(key, obj, rule)
             elif key in obj:
@@ -26,9 +29,12 @@ class Ignore(ABC):
 
     @classmethod
     def _apply_listable_rule(cls, obj, rules):
-        for i in rules:
-            if i in obj:
-                del obj[i]
+        for key in rules:
+            if type(key) is dict:
+                for index, y in enumerate(obj):
+                    obj[index] = cls.transform(obj[index], key)
+            elif key in obj:
+                del obj[key]
         return obj
 
     @classmethod
@@ -36,6 +42,17 @@ class Ignore(ABC):
         if rule == '*':
             if key in obj:
                 del obj[key]
+        return obj
+
+    @classmethod
+    def _is_regex_rule(cls, rule):
+        return type(rule) is dict and '_re' in rule
+
+    @classmethod
+    def _apply_regex_rule(cls, key, obj, rule):
+        regex = rule['_re']
+        if key in obj and re.match(regex, obj[key]):
+            del obj[key]
         return obj
 
     @classmethod
@@ -48,6 +65,8 @@ class Ignore(ABC):
             return cls._ignore_values(obj, rule)
         if key == '_list':
             return cls._ignore_list_items(obj, rule)
+        if key == '_range':
+            return cls._ignore_range(obj, rule)
         return obj
 
     @classmethod
@@ -61,4 +80,11 @@ class Ignore(ABC):
             return [x for x in obj if x not in black_list]
         if t is dict:
             return {k: obj[k] for k in obj if k not in black_list}
+        return obj
+
+    @classmethod
+    def _ignore_range(cls, obj, rule):
+        t = type(obj)
+        if t is int or t is float:
+            return rule[0] <= obj and obj <= rule[1]
         return obj

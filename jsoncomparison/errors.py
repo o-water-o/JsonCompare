@@ -38,7 +38,7 @@ class ValuesNotEqual(Error):
 
 
 class KeyNotExist(Error):
-    template = 'Key does not exists. Expected: <{e}>'
+    template = 'Key does not exist. Expected: <{e}>'
 
 
 class LengthsNotEqual(Error):
@@ -47,3 +47,7 @@ class LengthsNotEqual(Error):
 
 class ValueNotFound(Error):
     template = 'Value not found. Expected <{e}>'
+
+
+class UnexpectedKey(Error):
+    template = 'Unexpected key. Received: <{r}>'
